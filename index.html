@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fitness Data Details</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #00c4a7;
+      margin:0;
+      padding: 20px;
+      color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      max-width: 350px;
+      width: 100%;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 6px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 22px;
+      color: #000;
+    }
+    p.subtitle {
+      color: #666;
+      margin-top: 4px;
+      margin-bottom: 20px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #eee;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+      cursor: pointer;
+      color: #888;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+    .tab.active {
+      color: #ff4e50;
+      border-bottom-color: #ff4e50;
+    }
+    .range-text {
+      font-weight: bold;
+      font-size: 28px;
+      margin-bottom: 12px;
+      text-align: center;
+      color: #000;
+    }
+    .graph {
+      margin-bottom: 20px;
+      height: 100px;
+      position: relative;
+    }
+    .bar {
+      display: inline-block;
+      width: 8px;
+      margin-right: 4px;
+      background-color: #ff4e50;
+      bottom: 0;
+      position: absolute;
+      border-radius: 2px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .info-card {
+      background: #f5f8fa;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: inset 0 0 8px #d3e3e3;
+    }
+    .info-title {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .info-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Data Details</h1>
+  <p class="subtitle">Quickly understand your health status</p>
+
+  <div class="tabs">
+    <div class="tab active" data-period="hour">Hour</div>
+    <div class="tab" data-period="day">Day</div>
+    <div class="tab" data-period="week">Week</div>
+    <div class="tab" data-period="month">Month</div>
+    <div class="tab" data-period="year">Year</div>
+  </div>
+
+  <div class="range-text" id="rangeText">40-98 bpm</div>
+
+  <div class="graph" id="chart"></div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-title">Range</div>
+      <div class="info-value" id="rangeValue">40-98 bpm</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">Resting heart rate</div>
+      <div class="info-value" id="restingValue">55 bpm</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">Average walking heart rate</div>
+      <div class="info-value" id="walkingValue">88 bpm</div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">Normal sleeping heart rate</div>
+      <div class="info-value" id="sleepingValue">55 bpm</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const dataSets = {
+    hour: {
+      range: '45-92',
+      resting: 50,
+      walking: 85,
+      sleeping: 52,
+      data: [70, 65, 60, 55, 50, 75, 80, 85, 70, 65, 55, 45]
+    },
+    day: {
+      range: '40-98',
+      resting: 55,
+      walking: 88,
+      sleeping: 55,
+      data: [60, 62, 65, 70, 75, 80, 85, 90, 95, 98, 85, 80]
+    },
+    week: {
+      range: '38-94',
+      resting: 53,
+      walking: 82,
+      sleeping: 54,
+      data: [65, 70, 75, 72, 68, 62, 66]
+    },
+    month: {
+      range: '40-100',
+      resting: 54,
+      walking: 84,
+      sleeping: 56,
+      data: [65, 68, 72, 75, 70, 65, 74, 78, 80, 85, 90, 95, 98, 100, 85, 90]
+    },
+    year: {
+      range: '38-105',
+      resting: 52,
+      walking: 80,
+      sleeping: 50,
+      data: [70, 72, 75, 78, 82, 80, 85, 90, 92, 95, 100, 105]
+    }
+  };
+
+  const tabs = document.querySelectorAll('.tab');
+  const chart = document.getElementById('chart');
+  const rangeText = document.getElementById('rangeText');
+  const rangeValue = document.getElementById('rangeValue');
+  const restingValue = document.getElementById('restingValue');
+  const walkingValue = document.getElementById('walkingValue');
+  const sleepingValue = document.getElementById('sleepingValue');
+
+  function renderChart(dataPoints) {
+    chart.innerHTML = '';
+    const maxVal = Math.max(...dataPoints);
+    const maxHeight = 100;
+    const barWidth = Math.floor(chart.clientWidth / dataPoints.length) - 4;
+    dataPoints.forEach((val, i) => {
+      const bar = document.createElement('div');
+      bar.classList.add('bar');
+      bar.style.height = (val / maxVal) * maxHeight + 'px';
+      bar.style.left = i * (barWidth + 4) + 'px';
+      bar.style.width = barWidth + 'px';
+      chart.appendChild(bar);
+    });
+  }
+
+  function updateData(period) {
+    const data = dataSets[period];
+    rangeText.textContent = data.range + ' bpm';
+    rangeValue.textContent = data.range + ' bpm';
+    restingValue.textContent = data.resting + ' bpm';
+    walkingValue.textContent = data.walking + ' bpm';
+    sleepingValue.textContent = data.sleeping + ' bpm';
+    renderChart(data.data);
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      updateData(tab.dataset.period);
+    });
+  });
+
+  // Initialize with "day" data
+  updateData('day');
+</script>
+
+</body>
+</html>
